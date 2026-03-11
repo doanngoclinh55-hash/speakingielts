@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Speaking Practice - Fixed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5e1fd 0%, #d4f1f4 25%, #e8f5e8 50%, #fff3e6 75%, #fce4ec 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #5a5274;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        
+        h1 { color: #8b5cf6; font-size: 2.5em; margin-bottom: 10px; text-shadow: 0 2px 4px rgba(139,92,246,0.3); }
+        .subtitle { color: #6b7280; font-size: 1.1em; margin-bottom: 40px; }
+        
+        .start-btn, .btn {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            background: linear-gradient(45deg, #a78bfa, #ec4899);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(167,139,250,0.4);
+            margin: 10px;
+            font-family: inherit;
+        }
+        
+        .start-btn:hover, .btn:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(167,139,250,0.6); }
+        
+        .record-btn { background: linear-gradient(45deg, #10b981, #059669); box-shadow: 0 8px 25px rgba(16,185,129,0.4); }
+        .record-btn.recording { background: linear-gradient(45deg, #ef4444, #dc2626); box-shadow: 0 8px 25px rgba(239,68,68,0.4); }
+        .next-btn { background: linear-gradient(45deg, #3b82f6, #1d4ed8); box-shadow: 0 8px 25px rgba(59,130,246,0.4); }
+        
+        .part-section { display: none; text-align: center; }
+        .part-title { font-size: 2em; color: #ec4899; margin-bottom: 20px; }
+        
+        .question {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 20px;
+            font-size: 1.3em;
+            box-shadow: 0 10px 20px rgba(254,243,199,0.5);
+            border-left: 5px solid #f59e0b;
+        }
+        
+        .topic-info {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            padding: 20px;
+            border-radius: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #3b82f6;
+            font-size: 1.1em;
+        }
+        
+        .feedback {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            border-radius: 15px;
+            border-left: 5px solid #3b82f6;
+        }
+        
+        .audio-player { margin: 20px 0; }
+        audio { width: 100%; max-width: 400px; border-radius: 15px; }
+        
+        .controls { margin: 30px 0; }
+        
+        @media (max-width: 600px) {
+            .container { padding: 20px; margin: 10px; }
+            h1 { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌸 IELTS Speaking Practice 🌸</h1>
+        <p class="subtitle">Real exam format - Clean questions only</p>
+        
+        <button class="start-btn" id="startBtn">🚀 Start Practice</button>
+        
+        <!-- Part 1 -->
+        <div id="part1" class="part-section">
+            <div class="part-title">🎤 Part 1: Introduction & Interview</div>
+            <div id="part1-info"></div>
+            <div id="part1-content"></div>
+            <div class="controls">
+                <button id="record-btn" class="btn record-btn">🎙️ Start Recording</button>
+                <button id="next-question" class="btn next-btn" style="display:none;">➡️ Next Question</button>
+            </div>
+            <div id="feedback1" class="feedback" style="display:none;"></div>
+            <div class="audio-player" id="audio-player1" style="display:none;">
+                <audio id="playback1" controls></audio>
+            </div>
+            <button class="btn next-btn" onclick="goToPart2()" style="display:none;" id="finish-part1">✨ Finish Part 1 → Part 2</button>
+        </div>
+        
+        <!-- Part 2/3 placeholders -->
+        <div id="part2" class="part-section">
+            <div class="part-title">📝 Part 2: Long Turn</div>
+            <p>🗣️ Coming soon!</p>
+            <button class="btn next-btn" onclick="goToPart3()">➡️ Part 3</button>
+        </div>
+        <div id="part3" class="part-section">
+            <div class="part-title">💬 Part 3: Discussion</div>
+            <p>🤔 Coming soon!</p>
+            <button class="start-btn" onclick="restart()">🔄 Restart</button>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentQuestionIndex = 0;
+        let currentTopics = [];
+        let currentQuestions = [];
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let isRecording = false;
+        
+        // YOUR PART-1.DOCX TOPICS - FIXED
+        const compulsoryTopics = {
+            'Work or studies': [
+                'What subjects are you studying?',
+                'Do you like your subject?',
+                'Why did you choose to study that subject?',
+                'Do you think that your subject is popular in your country?',
+                'Do you have any plans for your studies in the next five years?'
+            ],
+            'Home & Accommodation': [
+                'Who do you live with?',
+                'Do you live in an apartment or a house?',
+                'What part of your home do you like the most?',
+                "What's the difference between where you are living now and where you have lived in the past?",
+                'What kind of house or apartment do you want to live in in the future?'
+            ],
+            'Hometown': [
+                'Is your hometown a big city or a small place?',
+                'Do you like your hometown?',
+                'What do you like (most) about your hometown?',
+                'Is there anything you dislike about it?',
+                'How long have you been living there?'
+            ],
+            'The area you live in': [
+                'Do you live in a noisy or a quiet area?',
+                'Are the people in your neighborhood nice and friendly?',
+                'Do you like the area that you live in?',
+                'Where do you like to go in that area?',
+                'Do you know any famous people in your area?'
+            ]
+        };
+        
+        const randomTopics = {
+            'Flowers': ['Do you love flowers?', 
+            'Are there a lot of flowers where you live?', 
+            'Do people in your country often send flowers to others?',
+            'Do people in your country often send flowers to others?'],
+
+            'Text messages': ['How often do you send text messages?', 
+            'Is sending text messages popular in your country?', 
+            'Do you reply to messages as soon as you receive them?', 
+            'Do people in your country often send flowers to others?'],
+
+            'Memory': ['Are you good at memorising things?', 
+            'Have you ever forgotten something important?', 
+            'How do you remember important things?',
+            'What do you need to remember in your daily life?'],
+
+            'Geography': ['How do you like geography?', 
+            'Do you think geography is useful?', 
+            'Have you ever learned geography?',
+            'Do you want to be a geography teacher?','Will you learn more about the geography of other countries?'],
+            
+            'Public transportation': [
+                'What kind of public transportation do you usually take?', 
+                'Do most people prefer public transportation in your country?',
+                'Did you take public transportation when you were a kid?',
+                'When do you usually take public transportation, in everyday life or while traveling?'],
+
+            'Birthday': [
+                'What do you usually do on your birthday?', 
+                'What did you do on your birthday when you were young?', 
+                'Do you think it is important for you to celebrate your birthday?',
+                'Whose birthday do you think is the most important to celebrate in Vietnam'],
+            'Snacks': [
+                'What snacks do you like to eat?',
+                'Did you often eat snacks when you were young?',
+                'When do you usually eat snacks now?',
+                'Do you think it is healthy for you to eat snacks?'],
+            'Names': [
+                'Does your name have any special meaning?',
+                'How would you choose names for your next generation?',
+                'Are there any differences between how Vietnamese name their children now and in past',
+                'Does anyone in your family have the same name as you?'],
+            'Puzzles': [
+                'Did you do puzzles in your childhood?',
+                'When do you do puzzles, during your trip or when you feel bored?',
+                'Do you like doing word puzzles or number puzzles? Which is more difficult for you',
+                'Do you think it is good for old people to do puzzles'],
+            'Rules': [
+                'Are there any rules for students at your school? ',
+                'Do you think students would benefit more from more rules? ',
+                'Do you prefer to have more or fewer rules at school? '
+            ],
+            'Jewelry':[
+                'Do you often wear jewelry?',
+                'What type of jewelry do you like?',
+                'Do you usually buy jewelry?',
+                'Why do you think some people wear a piece of jewelry for a long time?'
+
+            ]
+
+       
+       
+       
+        };
+        
+        // Start button - FIXED event listener
+        document.getElementById('startBtn').addEventListener('click', function() {
+            console.log('Start button clicked!');
+            this.style.display = 'none';
+            setupPart1();
+            document.getElementById('part1').style.display = 'block';
+        });
+        
+        function setupPart1() {
+            const compKeys = Object.keys(compulsoryTopics);
+            const compPick = compKeys[Math.floor(Math.random() * compKeys.length)];
+            
+            const randKeys = Object.keys(randomTopics);
+            const randPick1 = randKeys[Math.floor(Math.random() * randKeys.length)];
+            let randPick2Index = Math.floor(Math.random() * randKeys.length);
+            while (randKeys[randPick2Index] === randPick1) {
+                randPick2Index = Math.floor(Math.random() * randKeys.length);
+            }
+            const randPick2 = randKeys[randPick2Index];
+            
+            currentTopics = [compPick, randPick1, randPick2];
+            currentQuestions = [
+                ...compulsoryTopics[compPick],
+                ...randomTopics[randPick1],
+                ...randomTopics[randPick2]
+            ];
+            
+            document.getElementById('part1-info').innerHTML = `
+                <div class="topic-info">
+                    📋 <strong>Today you'll talk about:</strong> ${currentTopics.join(', ')}<br>
+                    🎯 <strong>Total:</strong> ${currentQuestions.length} questions
+                </div>
+            `;
+            
+            currentQuestionIndex = 0;
+            showQuestion();
+        }
+        
+        function showQuestion() {
+            const contentDiv = document.getElementById('part1-content');
+            if (currentQuestions[currentQuestionIndex]) {
+                contentDiv.innerHTML = `<div class="question">${currentQuestions[currentQuestionIndex]}</div>`;
+            }
+            
+            // Reset UI
+            isRecording = false;
+            const recordBtn = document.getElementById('record-btn');
+            const nextBtn = document.getElementById('next-question');
+            const feedbackDiv = document.getElementById('feedback1');
+            const audioPlayer = document.getElementById('audio-player1');
+            const finishBtn = document.getElementById('finish-part1');
+            
+            recordBtn.textContent = '🎙️ Start Recording';
+            recordBtn.classList.remove('recording');
+            recordBtn.style.display = 'inline-block';
+            nextBtn.style.display = 'none';
+            feedbackDiv.style.display = 'none';
+            audioPlayer.style.display = 'none';
+            finishBtn.style.display = 'none';
+        }
+        
+        // Recording functions - FIXED
+        document.getElementById('record-btn').addEventListener('click', toggleRecording);
+        document.getElementById('next-question').addEventListener('click', nextQuestion);
+        
+        async function toggleRecording() {
+            const recordBtn = document.getElementById('record-btn');
+            
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    recordedChunks = [];
+                    
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) recordedChunks.push(e.data);
+                    };
+                    
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(recordedChunks, { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        document.getElementById('playback1').src = audioUrl;
+                        document.getElementById('audio-player1').style.display = 'block';
+                        showFeedback();
+                        document.getElementById('next-question').style.display = 'inline-block';
+                        recordBtn.style.display = 'none';
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordBtn.textContent = '⏹️ Stop Recording';
+                    recordBtn.classList.add('recording');
+                } catch (err) {
+                    console.error('Microphone access denied:', err);
+                    alert('Please allow microphone access to record your answers!');
+                }
+            } else {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                    recordBtn.textContent = '🎙️ Processing...';
+                }
+            }
+        }
+        
+        function showFeedback() {
+            document.getElementById('feedback1').innerHTML = `
+                <h3>✨ Quick Feedback:</h3>
+                <ul>
+                    <li>⏱️ 15-20 seconds perfect for Part 1</li>
+                    <li>🗣️ Answer directly + reason + example</li>
+                    <li>📚 Use topic vocabulary naturally</li>
+                    <li>🎵 Listen & improve!</li>
+                </ul>
+            `;
+            document.getElementById('feedback1').style.display = 'block';
+        }
+        
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentQuestions.length) {
+                showQuestion();
+            } else {
+                document.getElementById('finish-part1').style.display = 'inline-block';
+            }
+        }
+        
+        function goToPart2() { 
+            document.getElementById('part1').style.display = 'none';
+            document.getElementById('part2').style.display = 'block'; 
+        }
+        
+        function goToPart3() { 
+            document.getElementById('part2').style.display = 'none'; 
+            document.getElementById('part3').style.display = 'block'; 
+        }
+        
+        function restart() { 
+            location.reload(); 
+        }
+    </script>
+</body>
+</html>
